@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Transfer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Online Transfer</h1>
+        <p class="subtitle">Transfer text between your devices</p>
+
+        <textarea
+            id="textInput"
+            placeholder="Paste your text here..."
+        ></textarea>
+
+        <div class="buttons">
+            <button id="saveBtn">Save</button>
+            <button id="copyBtn">Copy</button>
+            <button id="clearBtn">Clear</button>
+        </div>
+
+        <p id="status"></p>
+
+        <div class="saved-section">
+            <h2>Saved Text</h2>
+
+            <div id="savedText">
+                <!-- Saved messages will appear here -->
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <!-- Our JavaScript -->
+    <script src="script.js"></script>
+
+</body>
+</html>
