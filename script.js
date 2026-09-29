@@ -57,6 +57,7 @@ function displayMessages(messages) {
         const actions = document.createElement("div");
         actions.className = "message-actions";
 
+        // Copy button
         const copyButton = document.createElement("button");
         copyButton.textContent = "Copy";
         copyButton.className = "copy-message";
@@ -64,18 +65,37 @@ function displayMessages(messages) {
         copyButton.addEventListener("click", async function () {
             try {
                 await navigator.clipboard.writeText(message.content);
+
+                copyButton.textContent = "✓ Copied";
                 status.textContent = "Copied!";
+
+                setTimeout(function () {
+                    copyButton.textContent = "Copy";
+                }, 1500);
+
             } catch (error) {
                 console.error("Copy error:", error);
                 status.textContent = "Copy failed.";
             }
         });
 
+        // Delete button
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "Delete";
         deleteButton.className = "delete-message";
 
         deleteButton.addEventListener("click", async function () {
+            const confirmed = confirm(
+                "Are you sure you want to delete this message?"
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
+            deleteButton.textContent = "Deleting...";
+            deleteButton.disabled = true;
+
             const { error } = await supabaseClient
                 .from("messages")
                 .delete()
@@ -84,6 +104,8 @@ function displayMessages(messages) {
             if (error) {
                 console.error("Delete error:", error);
                 status.textContent = "Error deleting message.";
+                deleteButton.textContent = "Delete";
+                deleteButton.disabled = false;
                 return;
             }
 
@@ -101,6 +123,7 @@ function displayMessages(messages) {
     });
 }
 
+// Save
 saveBtn.addEventListener("click", async function () {
     const text = textInput.value.trim();
 
@@ -108,6 +131,10 @@ saveBtn.addEventListener("click", async function () {
         status.textContent = "Please enter some text.";
         return;
     }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Saving...";
+    status.textContent = "";
 
     const { error } = await supabaseClient
         .from("messages")
@@ -120,14 +147,22 @@ saveBtn.addEventListener("click", async function () {
     if (error) {
         console.error("Save error:", error);
         status.textContent = "Error saving message.";
+
+        saveBtn.disabled = false;
+        saveBtn.textContent = "Save";
         return;
     }
 
     textInput.value = "";
     status.textContent = "Text saved!";
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save";
+
     loadMessages();
 });
 
+// Copy All
 copyBtn.addEventListener("click", async function () {
     const { data, error } = await supabaseClient
         .from("messages")
@@ -151,13 +186,21 @@ copyBtn.addEventListener("click", async function () {
 
     try {
         await navigator.clipboard.writeText(allText);
+
+        copyBtn.textContent = "✓ Copied All";
         status.textContent = "All messages copied!";
+
+        setTimeout(function () {
+            copyBtn.textContent = "Copy All";
+        }, 1500);
+
     } catch (error) {
         console.error("Copy error:", error);
         status.textContent = "Copy failed.";
     }
 });
 
+// Clear
 clearBtn.addEventListener("click", function () {
     textInput.value = "";
     status.textContent = "Input cleared.";
