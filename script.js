@@ -42,6 +42,8 @@ const RESUMABLE_THRESHOLD =
     6 * 1024 * 1024;
 const TUS_CHUNK_SIZE =
     6 * 1024 * 1024;
+let activeUploadCancel = null;
+let uploadCancelled = false;
 // =========================
 // AUTH FUNCTIONS
 // =========================
@@ -491,6 +493,13 @@ async function standardUpload(
                 `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${encodedFilePath}`;
             const xhr =
                 new XMLHttpRequest();
+
+            activeUploadCancel =
+                function () {
+                    uploadCancelled = true;
+                    xhr.abort();
+                };
+
             xhr.open(
                 "POST",
                 uploadUrl,
@@ -538,7 +547,7 @@ async function standardUpload(
                             1024
                         ).toFixed(2);
                     uploadBtn.textContent =
-                        `Uploading ${percentage}%`;
+                        `Cancel Upload (${percentage}%)`;
                     status.textContent =
                         `${uploadedMB} MB / ${totalMB} MB`;
                 }
@@ -573,6 +582,15 @@ async function standardUpload(
             xhr.addEventListener(
                 "abort",
                 function () {
+                    if (uploadCancelled) {
+                        reject(
+                            new Error(
+                                "UPLOAD_CANCELLED"
+                            )
+                        );
+                        return;
+                    }
+
                     reject(
                         new Error(
                             "Upload was aborted."
@@ -636,6 +654,16 @@ async function resumableUpload(
                                     "TUS upload error:",
                                     error
                                 );
+
+                                if (uploadCancelled) {
+                                    reject(
+                                        new Error(
+                                            "UPLOAD_CANCELLED"
+                                        )
+                                    );
+                                    return;
+                                }
+
                                 reject(error);
                             },
                         onProgress:
@@ -662,7 +690,7 @@ async function resumableUpload(
                                         1024
                                     ).toFixed(2);
                                 uploadBtn.textContent =
-                                    `Uploading ${percentage}%`;
+                                    `Cancel Upload (${percentage}%)`;
                                 status.textContent =
                                     `${uploadedMB} MB / ${totalMB} MB`;
                             },
@@ -672,9 +700,37 @@ async function resumableUpload(
                             }
                     }
                 );
+
+            activeUploadCancel =
+                function () {
+                    uploadCancelled = true;
+
+                    upload.abort(true)
+                        .catch(
+                            function (error) {
+                                console.error(
+                                    "TUS abort error:",
+                                    error
+                                );
+                            }
+                        );
+
+                    reject(
+                        new Error(
+                            "UPLOAD_CANCELLED"
+                        )
+                    );
+                };
+
             upload.findPreviousUploads()
                 .then(
                     function (previousUploads) {
+                        if (
+                            uploadCancelled
+                        ) {
+                            return;
+                        }
+
                         if (
                             previousUploads &&
                             previousUploads.length > 0
@@ -683,6 +739,7 @@ async function resumableUpload(
                                 previousUploads[0]
                             );
                         }
+
                         upload.start();
                     }
                 )
@@ -752,6 +809,12 @@ async function removeStorageFile(
 uploadBtn.addEventListener(
     "click",
     async function () {
+
+        if (activeUploadCancel) {
+            activeUploadCancel();
+            return;
+        }
+
         const file =
             fileInput.files[0];
         if (!file) {
@@ -759,11 +822,25 @@ uploadBtn.addEventListener(
                 "Please choose a file first.";
             return;
         }
-        uploadBtn.disabled = true;
+
+        uploadCancelled = false;
+        uploadBtn.disabled = false;
         uploadBtn.textContent =
             "Preparing...";
+        uploadBtn.style.setProperty(
+            "background",
+            "#dc3545",
+            "important"
+        );
+        
+        uploadBtn.style.setProperty(
+            "color",
+            "#ffffff",
+            "important"
+        );
         status.textContent = "";
         let filePath = null;
+
         try {
             const {
                 data: {
@@ -799,7 +876,7 @@ uploadBtn.addEventListener(
                 status.textContent =
                     "Starting resumable upload...";
                 uploadBtn.textContent =
-                    "Uploading 0%";
+                    "Cancel Upload (0%)";
                 await resumableUpload(
                     filePath,
                     file,
@@ -809,13 +886,16 @@ uploadBtn.addEventListener(
                 status.textContent =
                     "Uploading...";
                 uploadBtn.textContent =
-                    "Uploading 0%";
+                    "Cancel Upload (0%)";
                 await standardUpload(
                     filePath,
                     file,
                     session.access_token
                 );
             }
+
+            activeUploadCancel = null;
+
             uploadBtn.textContent =
                 "Saving information...";
             await saveFileInformation(
@@ -828,19 +908,48 @@ uploadBtn.addEventListener(
             status.textContent =
                 "File uploaded successfully!";
             loadFiles();
+
         } catch (error) {
             console.error(
                 "Upload error:",
                 error
             );
-            if (filePath) {
+
+            if (
+                error &&
+                error.message ===
+                "UPLOAD_CANCELLED"
+            ) {
+                status.textContent =
+                    "Upload cancelled.";
+            } else {
+                if (filePath) {
+                    await removeStorageFile(
+                        filePath
+                    );
+                }
+
+                status.textContent =
+                    "Error uploading file.";
+            }
+
+            if (
+                error &&
+                error.message ===
+                "UPLOAD_CANCELLED" &&
+                filePath
+            ) {
                 await removeStorageFile(
                     filePath
                 );
             }
-            status.textContent =
-                "Error uploading file.";
+
         } finally {
+            activeUploadCancel = null;
+            uploadCancelled = false;
+
+            uploadBtn.style.removeProperty("background");
+            uploadBtn.style.removeProperty("color");
             uploadBtn.disabled =
                 false;
             uploadBtn.textContent =
