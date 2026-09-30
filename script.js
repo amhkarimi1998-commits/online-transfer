@@ -6,6 +6,25 @@ const supabaseClient = supabase.createClient(
     SUPABASE_KEY
 );
 
+
+// =========================
+// AUTH ELEMENTS
+// =========================
+
+const loginScreen = document.getElementById("loginScreen");
+const appScreen = document.getElementById("appScreen");
+
+const loginForm = document.getElementById("loginForm");
+const emailInput = document.getElementById("emailInput");
+const passwordInput = document.getElementById("passwordInput");
+const loginBtn = document.getElementById("loginBtn");
+const loginStatus = document.getElementById("loginStatus");
+
+
+// =========================
+// APP ELEMENTS
+// =========================
+
 const textInput = document.getElementById("textInput");
 const saveBtn = document.getElementById("saveBtn");
 const copyBtn = document.getElementById("copyBtn");
@@ -22,18 +41,143 @@ const fileCount = document.getElementById("fileCount");
 
 
 // =========================
+// AUTH FUNCTIONS
+// =========================
+
+function showLoginScreen() {
+    loginScreen.style.display = "flex";
+    appScreen.style.display = "none";
+}
+
+function showAppScreen() {
+    loginScreen.style.display = "none";
+    appScreen.style.display = "block";
+}
+
+
+// Login
+
+loginForm.addEventListener("submit", async function (event) {
+
+    event.preventDefault();
+
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (email === "" || password === "") {
+        loginStatus.textContent =
+            "Please enter your email and password.";
+        return;
+    }
+
+    loginBtn.disabled = true;
+    loginBtn.textContent = "Signing in...";
+    loginStatus.textContent = "";
+
+    const { error } =
+        await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+    if (error) {
+
+        console.error("Login error:", error);
+
+        loginStatus.textContent =
+            "Invalid email or password.";
+
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Sign In";
+
+        return;
+    }
+
+    loginStatus.textContent = "";
+
+    passwordInput.value = "";
+
+    loginBtn.disabled = false;
+    loginBtn.textContent = "Sign In";
+});
+
+
+// Listen for authentication changes
+
+supabaseClient.auth.onAuthStateChange(
+    function (event, session) {
+
+        if (session && session.user) {
+
+            showAppScreen();
+
+            loadMessages();
+            loadFiles();
+
+        } else {
+
+            showLoginScreen();
+
+        }
+    }
+);
+
+
+// Check existing login when page loads
+
+async function checkAuthentication() {
+
+    const { data, error } =
+        await supabaseClient.auth.getSession();
+
+    if (error) {
+
+        console.error(
+            "Authentication check error:",
+            error
+        );
+
+        showLoginScreen();
+
+        return;
+    }
+
+    if (data.session && data.session.user) {
+
+        showAppScreen();
+
+        loadMessages();
+        loadFiles();
+
+    } else {
+
+        showLoginScreen();
+
+    }
+}
+
+
+// =========================
 // TEXT FUNCTIONS
 // =========================
 
 async function loadMessages() {
-    const { data, error } = await supabaseClient
-        .from("messages")
-        .select("*")
-        .order("created_at", { ascending: true });
+
+    const { data, error } =
+        await supabaseClient
+            .from("messages")
+            .select("*")
+            .order("created_at", {
+                ascending: true
+            });
 
     if (error) {
+
         console.error("Load error:", error);
-        status.textContent = "Error loading messages.";
+
+        status.textContent =
+            "Error loading messages.";
+
         return;
     }
 
@@ -42,11 +186,13 @@ async function loadMessages() {
 
 
 function displayMessages(messages) {
+
     savedText.innerHTML = "";
 
     const count = messages ? messages.length : 0;
 
     if (count === 0) {
+
         messageCount.textContent = "";
 
         savedText.innerHTML = `
@@ -62,87 +208,135 @@ function displayMessages(messages) {
 
     messages.forEach(function (message) {
 
-        const messageBox = document.createElement("div");
+        const messageBox =
+            document.createElement("div");
+
         messageBox.className = "message-box";
 
-        const messageContent = document.createElement("div");
-        messageContent.className = "message-content";
-        messageContent.textContent = message.content;
 
-        const actions = document.createElement("div");
-        actions.className = "message-actions";
+        const messageContent =
+            document.createElement("div");
+
+        messageContent.className =
+            "message-content";
+
+        messageContent.textContent =
+            message.content;
+
+
+        const actions =
+            document.createElement("div");
+
+        actions.className =
+            "message-actions";
 
 
         // Copy button
-        const copyButton = document.createElement("button");
+
+        const copyButton =
+            document.createElement("button");
 
         copyButton.textContent = "Copy";
         copyButton.className = "copy-message";
 
-        copyButton.addEventListener("click", async function () {
 
-            try {
+        copyButton.addEventListener(
+            "click",
+            async function () {
 
-                await navigator.clipboard.writeText(message.content);
+                try {
 
-                copyButton.textContent = "✓ Copied";
-                status.textContent = "Copied!";
+                    await navigator.clipboard.writeText(
+                        message.content
+                    );
 
-                setTimeout(function () {
-                    copyButton.textContent = "Copy";
-                }, 1500);
+                    copyButton.textContent =
+                        "✓ Copied";
 
-            } catch (error) {
+                    status.textContent =
+                        "Copied!";
 
-                console.error("Copy error:", error);
-                status.textContent = "Copy failed.";
+                    setTimeout(function () {
 
+                        copyButton.textContent =
+                            "Copy";
+
+                    }, 1500);
+
+                } catch (error) {
+
+                    console.error(
+                        "Copy error:",
+                        error
+                    );
+
+                    status.textContent =
+                        "Copy failed.";
+                }
             }
-
-        });
+        );
 
 
         // Delete button
-        const deleteButton = document.createElement("button");
+
+        const deleteButton =
+            document.createElement("button");
 
         deleteButton.textContent = "Delete";
-        deleteButton.className = "delete-message";
+        deleteButton.className =
+            "delete-message";
 
-        deleteButton.addEventListener("click", async function () {
 
-            const confirmed = confirm(
-                "Are you sure you want to delete this message?"
-            );
+        deleteButton.addEventListener(
+            "click",
+            async function () {
 
-            if (!confirmed) {
-                return;
+                const confirmed = confirm(
+                    "Are you sure you want to delete this message?"
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                deleteButton.textContent =
+                    "Deleting...";
+
+                deleteButton.disabled = true;
+
+
+                const { error } =
+                    await supabaseClient
+                        .from("messages")
+                        .delete()
+                        .eq("id", message.id);
+
+
+                if (error) {
+
+                    console.error(
+                        "Delete error:",
+                        error
+                    );
+
+                    status.textContent =
+                        "Error deleting message.";
+
+                    deleteButton.textContent =
+                        "Delete";
+
+                    deleteButton.disabled =
+                        false;
+
+                    return;
+                }
+
+                status.textContent =
+                    "Message deleted.";
+
+                loadMessages();
             }
-
-            deleteButton.textContent = "Deleting...";
-            deleteButton.disabled = true;
-
-            const { error } = await supabaseClient
-                .from("messages")
-                .delete()
-                .eq("id", message.id);
-
-            if (error) {
-
-                console.error("Delete error:", error);
-
-                status.textContent = "Error deleting message.";
-
-                deleteButton.textContent = "Delete";
-                deleteButton.disabled = false;
-
-                return;
-            }
-
-            status.textContent = "Message deleted.";
-
-            loadMessages();
-
-        });
+        );
 
 
         actions.appendChild(copyButton);
@@ -152,119 +346,161 @@ function displayMessages(messages) {
         messageBox.appendChild(actions);
 
         savedText.appendChild(messageBox);
-
     });
 }
 
 
 // Save text
-saveBtn.addEventListener("click", async function () {
 
-    const text = textInput.value.trim();
+saveBtn.addEventListener(
+    "click",
+    async function () {
 
-    if (text === "") {
+        const text =
+            textInput.value.trim();
 
-        status.textContent = "Please enter some text.";
+        if (text === "") {
 
-        return;
-    }
+            status.textContent =
+                "Please enter some text.";
 
-    saveBtn.disabled = true;
-    saveBtn.textContent = "Saving...";
-    status.textContent = "";
+            return;
+        }
 
-    const { error } = await supabaseClient
-        .from("messages")
-        .insert([
-            {
-                content: text
-            }
-        ]);
+        saveBtn.disabled = true;
+        saveBtn.textContent = "Saving...";
+        status.textContent = "";
 
-    if (error) {
 
-        console.error("Save error:", error);
+        const { error } =
+            await supabaseClient
+                .from("messages")
+                .insert([
+                    {
+                        content: text
+                    }
+                ]);
 
-        status.textContent = "Error saving message.";
+
+        if (error) {
+
+            console.error(
+                "Save error:",
+                error
+            );
+
+            status.textContent =
+                "Error saving message.";
+
+            saveBtn.disabled = false;
+            saveBtn.textContent = "Save";
+
+            return;
+        }
+
+        textInput.value = "";
+
+        status.textContent =
+            "Text saved!";
 
         saveBtn.disabled = false;
         saveBtn.textContent = "Save";
 
-        return;
+        loadMessages();
     }
-
-    textInput.value = "";
-
-    status.textContent = "Text saved!";
-
-    saveBtn.disabled = false;
-    saveBtn.textContent = "Save";
-
-    loadMessages();
-
-});
+);
 
 
 // Copy All
-copyBtn.addEventListener("click", async function () {
 
-    const { data, error } = await supabaseClient
-        .from("messages")
-        .select("content")
-        .order("created_at", { ascending: true });
+copyBtn.addEventListener(
+    "click",
+    async function () {
 
-    if (error) {
+        const { data, error } =
+            await supabaseClient
+                .from("messages")
+                .select("content")
+                .order("created_at", {
+                    ascending: true
+                });
 
-        console.error("Copy all error:", error);
 
-        status.textContent = "Error copying messages.";
+        if (error) {
 
-        return;
+            console.error(
+                "Copy all error:",
+                error
+            );
+
+            status.textContent =
+                "Error copying messages.";
+
+            return;
+        }
+
+
+        if (!data || data.length === 0) {
+
+            status.textContent =
+                "There is no text to copy.";
+
+            return;
+        }
+
+
+        const allText =
+            data
+                .map(message => message.content)
+                .join("\n\n");
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                allText
+            );
+
+            copyBtn.textContent =
+                "✓ Copied All";
+
+            status.textContent =
+                "All messages copied!";
+
+
+            setTimeout(function () {
+
+                copyBtn.textContent =
+                    "Copy All";
+
+            }, 1500);
+
+        } catch (error) {
+
+            console.error(
+                "Copy error:",
+                error
+            );
+
+            status.textContent =
+                "Copy failed.";
+        }
     }
-
-    if (!data || data.length === 0) {
-
-        status.textContent = "There is no text to copy.";
-
-        return;
-    }
-
-    const allText = data
-        .map(message => message.content)
-        .join("\n\n");
-
-    try {
-
-        await navigator.clipboard.writeText(allText);
-
-        copyBtn.textContent = "✓ Copied All";
-        status.textContent = "All messages copied!";
-
-        setTimeout(function () {
-
-            copyBtn.textContent = "Copy All";
-
-        }, 1500);
-
-    } catch (error) {
-
-        console.error("Copy error:", error);
-
-        status.textContent = "Copy failed.";
-
-    }
-
-});
+);
 
 
 // Clear
-clearBtn.addEventListener("click", function () {
 
-    textInput.value = "";
+clearBtn.addEventListener(
+    "click",
+    function () {
 
-    status.textContent = "Input cleared.";
+        textInput.value = "";
 
-});
+        status.textContent =
+            "Input cleared.";
+    }
+);
 
 
 // =========================
@@ -272,138 +508,182 @@ clearBtn.addEventListener("click", function () {
 // =========================
 
 // Show selected file
-fileInput.addEventListener("change", function () {
 
-    const file = fileInput.files[0];
+fileInput.addEventListener(
+    "change",
+    function () {
 
-    if (!file) {
+        const file =
+            fileInput.files[0];
 
-        selectedFile.textContent = "";
+        if (!file) {
 
-        return;
+            selectedFile.textContent = "";
+
+            return;
+        }
+
+        const sizeMB =
+            file.size / (1024 * 1024);
+
+        selectedFile.textContent =
+            `${file.name} • ${sizeMB.toFixed(2)} MB`;
     }
-
-    const sizeMB = file.size / (1024 * 1024);
-
-    selectedFile.textContent =
-        `${file.name} • ${sizeMB.toFixed(2)} MB`;
-
-});
+);
 
 
 // Upload file
-uploadBtn.addEventListener("click", async function () {
 
-    const file = fileInput.files[0];
+uploadBtn.addEventListener(
+    "click",
+    async function () {
 
-    if (!file) {
+        const file =
+            fileInput.files[0];
 
-        status.textContent = "Please choose a file first.";
+        if (!file) {
 
-        return;
-    }
-
-    uploadBtn.disabled = true;
-    uploadBtn.textContent = "Uploading...";
-    status.textContent = "";
-
-    try {
-
-        // Create a unique file path
-        const uniqueName =
-            `${Date.now()}-${Math.random().toString(36).substring(2, 10)}-${file.name}`;
-
-        const filePath = uniqueName;
-
-
-        // Upload to Supabase Storage
-        const { error: uploadError } = await supabaseClient
-            .storage
-            .from("files")
-            .upload(filePath, file, {
-                cacheControl: "3600",
-                upsert: false,
-                contentType: file.type || "application/octet-stream"
-            });
-
-
-        if (uploadError) {
-
-            console.error("Upload error:", uploadError);
-
-            status.textContent = "Error uploading file.";
+            status.textContent =
+                "Please choose a file first.";
 
             return;
         }
 
+        uploadBtn.disabled = true;
+        uploadBtn.textContent =
+            "Uploading...";
 
-        // Save file information in database
-        const { error: databaseError } = await supabaseClient
-            .from("files")
-            .insert([
-                {
-                    name: file.name,
-                    path: filePath,
-                    size: file.size,
-                    type: file.type || "application/octet-stream"
-                }
-            ]);
+        status.textContent = "";
 
 
-        // If database insert fails,
-        // remove the uploaded file so we don't leave an orphan.
-        if (databaseError) {
+        try {
 
-            console.error("Database error:", databaseError);
+            const uniqueName =
+                `${Date.now()}-${Math.random()
+                    .toString(36)
+                    .substring(2, 10)}-${file.name}`;
 
-            await supabaseClient
-                .storage
-                .from("files")
-                .remove([filePath]);
+            const filePath =
+                uniqueName;
 
-            status.textContent = "Error saving file information.";
 
-            return;
+            const { error: uploadError } =
+                await supabaseClient
+                    .storage
+                    .from("files")
+                    .upload(
+                        filePath,
+                        file,
+                        {
+                            cacheControl: "3600",
+                            upsert: false,
+                            contentType:
+                                file.type ||
+                                "application/octet-stream"
+                        }
+                    );
+
+
+            if (uploadError) {
+
+                console.error(
+                    "Upload error:",
+                    uploadError
+                );
+
+                status.textContent =
+                    "Error uploading file.";
+
+                return;
+            }
+
+
+            const { error: databaseError } =
+                await supabaseClient
+                    .from("files")
+                    .insert([
+                        {
+                            name: file.name,
+                            path: filePath,
+                            size: file.size,
+                            type:
+                                file.type ||
+                                "application/octet-stream"
+                        }
+                    ]);
+
+
+            if (databaseError) {
+
+                console.error(
+                    "Database error:",
+                    databaseError
+                );
+
+                await supabaseClient
+                    .storage
+                    .from("files")
+                    .remove([
+                        filePath
+                    ]);
+
+                status.textContent =
+                    "Error saving file information.";
+
+                return;
+            }
+
+
+            fileInput.value = "";
+            selectedFile.textContent = "";
+
+            status.textContent =
+                "File uploaded successfully!";
+
+            loadFiles();
+
+        } catch (error) {
+
+            console.error(
+                "Unexpected upload error:",
+                error
+            );
+
+            status.textContent =
+                "Error uploading file.";
+
+        } finally {
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent =
+                "Upload File";
         }
-
-
-        // Reset file input
-        fileInput.value = "";
-        selectedFile.textContent = "";
-
-        status.textContent = "File uploaded successfully!";
-
-        loadFiles();
-
-    } catch (error) {
-
-        console.error("Unexpected upload error:", error);
-
-        status.textContent = "Error uploading file.";
-
-    } finally {
-
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = "Upload File";
-
     }
-
-});
+);
 
 
 // Load files
+
 async function loadFiles() {
 
-    const { data, error } = await supabaseClient
-        .from("files")
-        .select("*")
-        .order("created_at", { ascending: true });
+    const { data, error } =
+        await supabaseClient
+            .from("files")
+            .select("*")
+            .order("created_at", {
+                ascending: true
+            });
+
 
     if (error) {
 
-        console.error("Load files error:", error);
+        console.error(
+            "Load files error:",
+            error
+        );
 
         fileCount.textContent = "";
+
         savedFiles.innerHTML = `
             <div class="empty-files">
                 Error loading files.
@@ -414,16 +694,18 @@ async function loadFiles() {
     }
 
     displayFiles(data);
-
 }
 
 
 // Display files
+
 function displayFiles(files) {
 
     savedFiles.innerHTML = "";
 
-    const count = files ? files.length : 0;
+    const count =
+        files ? files.length : 0;
+
 
     if (count === 0) {
 
@@ -438,31 +720,49 @@ function displayFiles(files) {
         return;
     }
 
-    fileCount.textContent = `${count} saved`;
+    fileCount.textContent =
+        `${count} saved`;
 
 
     files.forEach(function (file) {
 
-        const fileBox = document.createElement("div");
-        fileBox.className = "file-box";
+        const fileBox =
+            document.createElement("div");
+
+        fileBox.className =
+            "file-box";
 
 
-        // File information
-        const fileInfo = document.createElement("div");
-        fileInfo.className = "file-info";
+        const fileInfo =
+            document.createElement("div");
+
+        fileInfo.className =
+            "file-info";
 
 
-        const fileName = document.createElement("div");
-        fileName.className = "file-name";
-        fileName.textContent = file.name;
+        const fileName =
+            document.createElement("div");
+
+        fileName.className =
+            "file-name";
+
+        fileName.textContent =
+            file.name;
 
 
-        const fileSize = formatFileSize(file.size);
+        const fileSize =
+            formatFileSize(file.size);
 
-        const fileType = file.type || "Unknown type";
+        const fileType =
+            file.type || "Unknown type";
 
-        const fileDetails = document.createElement("div");
-        fileDetails.className = "file-details";
+
+        const fileDetails =
+            document.createElement("div");
+
+        fileDetails.className =
+            "file-details";
+
         fileDetails.textContent =
             `${fileSize} • ${fileType}`;
 
@@ -471,157 +771,203 @@ function displayFiles(files) {
         fileInfo.appendChild(fileDetails);
 
 
-        // Actions
-        const actions = document.createElement("div");
-        actions.className = "file-actions";
+        const actions =
+            document.createElement("div");
+
+        actions.className =
+            "file-actions";
 
 
         // Download button
-        const downloadButton = document.createElement("button");
 
-        downloadButton.textContent = "Download";
-        downloadButton.className = "download-file";
+        const downloadButton =
+            document.createElement("button");
+
+        downloadButton.textContent =
+            "Download";
+
+        downloadButton.className =
+            "download-file";
 
 
-        downloadButton.addEventListener("click", async function () {
+        downloadButton.addEventListener(
+            "click",
+            async function () {
 
-            downloadButton.disabled = true;
-            downloadButton.textContent = "Preparing...";
+                downloadButton.disabled =
+                    true;
 
-            try {
+                downloadButton.textContent =
+                    "Preparing...";
 
-                const { data, error } = await supabaseClient
-                    .storage
-                    .from("files")
-                    .download(file.path);
 
-                if (error) {
+                try {
 
-                    console.error("Download error:", error);
+                    const { data, error } =
+                        await supabaseClient
+                            .storage
+                            .from("files")
+                            .download(
+                                file.path
+                            );
 
-                    status.textContent = "Error downloading file.";
 
-                    return;
+                    if (error) {
+
+                        console.error(
+                            "Download error:",
+                            error
+                        );
+
+                        status.textContent =
+                            "Error downloading file.";
+
+                        return;
+                    }
+
+
+                    const url =
+                        URL.createObjectURL(data);
+
+                    const link =
+                        document.createElement("a");
+
+                    link.href = url;
+                    link.download = file.name;
+
+                    document.body.appendChild(link);
+
+                    link.click();
+
+                    link.remove();
+
+                    URL.revokeObjectURL(url);
+
+                    status.textContent =
+                        "Download started.";
+
+                } catch (error) {
+
+                    console.error(
+                        "Download error:",
+                        error
+                    );
+
+                    status.textContent =
+                        "Error downloading file.";
+
+                } finally {
+
+                    downloadButton.disabled =
+                        false;
+
+                    downloadButton.textContent =
+                        "Download";
                 }
-
-
-                const url = URL.createObjectURL(data);
-
-                const link = document.createElement("a");
-
-                link.href = url;
-                link.download = file.name;
-
-                document.body.appendChild(link);
-
-                link.click();
-
-                link.remove();
-
-                URL.revokeObjectURL(url);
-
-                status.textContent = "Download started.";
-
-            } catch (error) {
-
-                console.error("Download error:", error);
-
-                status.textContent = "Error downloading file.";
-
-            } finally {
-
-                downloadButton.disabled = false;
-                downloadButton.textContent = "Download";
-
             }
-
-        });
+        );
 
 
         // Delete button
-        const deleteButton = document.createElement("button");
 
-        deleteButton.textContent = "Delete";
-        deleteButton.className = "delete-file";
+        const deleteButton =
+            document.createElement("button");
 
+        deleteButton.textContent =
+            "Delete";
 
-        deleteButton.addEventListener("click", async function () {
-
-            const confirmed = confirm(
-                `Are you sure you want to delete "${file.name}"?`
-            );
-
-            if (!confirmed) {
-                return;
-            }
-
-            deleteButton.disabled = true;
-            deleteButton.textContent = "Deleting...";
+        deleteButton.className =
+            "delete-file";
 
 
-            try {
+        deleteButton.addEventListener(
+            "click",
+            async function () {
 
-                // Delete from Storage
-                const { error: storageError } = await supabaseClient
-                    .storage
-                    .from("files")
-                    .remove([file.path]);
+                const confirmed = confirm(
+                    `Are you sure you want to delete "${file.name}"?`
+                );
+
+                if (!confirmed) {
+                    return;
+                }
+
+                deleteButton.disabled = true;
+                deleteButton.textContent =
+                    "Deleting...";
 
 
-                if (storageError) {
+                try {
+
+                    const { error: storageError } =
+                        await supabaseClient
+                            .storage
+                            .from("files")
+                            .remove([
+                                file.path
+                            ]);
+
+
+                    if (storageError) {
+
+                        console.error(
+                            "Storage delete error:",
+                            storageError
+                        );
+
+                        status.textContent =
+                            "Error deleting file.";
+
+                        return;
+                    }
+
+
+                    const { error: databaseError } =
+                        await supabaseClient
+                            .from("files")
+                            .delete()
+                            .eq("id", file.id);
+
+
+                    if (databaseError) {
+
+                        console.error(
+                            "Database delete error:",
+                            databaseError
+                        );
+
+                        status.textContent =
+                            "File removed from storage, but database cleanup failed.";
+
+                        return;
+                    }
+
+
+                    status.textContent =
+                        "File deleted.";
+
+                    loadFiles();
+
+                } catch (error) {
 
                     console.error(
-                        "Storage delete error:",
-                        storageError
+                        "Delete error:",
+                        error
                     );
 
                     status.textContent =
                         "Error deleting file.";
 
-                    return;
+                } finally {
+
+                    deleteButton.disabled =
+                        false;
+
+                    deleteButton.textContent =
+                        "Delete";
                 }
-
-
-                // Delete database record
-                const { error: databaseError } = await supabaseClient
-                    .from("files")
-                    .delete()
-                    .eq("id", file.id);
-
-
-                if (databaseError) {
-
-                    console.error(
-                        "Database delete error:",
-                        databaseError
-                    );
-
-                    status.textContent =
-                        "File removed from storage, but database cleanup failed.";
-
-                    return;
-                }
-
-
-                status.textContent = "File deleted.";
-
-                loadFiles();
-
-            } catch (error) {
-
-                console.error("Delete error:", error);
-
-                status.textContent =
-                    "Error deleting file.";
-
-            } finally {
-
-                deleteButton.disabled = false;
-                deleteButton.textContent = "Delete";
-
             }
-
-        });
+        );
 
 
         actions.appendChild(downloadButton);
@@ -631,13 +977,14 @@ function displayFiles(files) {
         fileBox.appendChild(actions);
 
         savedFiles.appendChild(fileBox);
-
     });
-
 }
 
 
-// Format file size
+// =========================
+// FORMAT FILE SIZE
+// =========================
+
 function formatFileSize(bytes) {
 
     if (bytes === 0) {
@@ -653,16 +1000,24 @@ function formatFileSize(bytes) {
     ];
 
     const index =
-        Math.floor(Math.log(bytes) / Math.log(1024));
+        Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
 
     return (
         parseFloat(
-            (bytes / Math.pow(1024, index)).toFixed(2)
+            (
+                bytes /
+                Math.pow(
+                    1024,
+                    index
+                )
+            ).toFixed(2)
         ) +
         " " +
         units[index]
     );
-
 }
 
 
@@ -670,5 +1025,4 @@ function formatFileSize(bytes) {
 // START
 // =========================
 
-loadMessages();
-loadFiles();
+checkAuthentication();
