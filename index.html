@@ -15,10 +15,11 @@
             <div class="logo">↔</div>
             <div>
                 <h1>Online Transfer</h1>
-                <p class="subtitle">Transfer text between your devices</p>
+                <p class="subtitle">Transfer text and files between your devices</p>
             </div>
         </div>
 
+        <!-- Text Transfer -->
         <textarea
             id="textInput"
             placeholder="Paste your text here..."
@@ -30,9 +31,40 @@
             <button id="clearBtn">Clear</button>
         </div>
 
+        <!-- File Transfer -->
+        <div class="file-section">
+
+            <div class="file-header">
+                <h2>Transfer Files</h2>
+                <span>Any file type</span>
+            </div>
+
+            <label for="fileInput" class="file-drop-area">
+                <div class="file-icon">📁</div>
+                <div class="file-title">Choose a file</div>
+                <div class="file-subtitle">
+                    Images, videos, PDF, Word, Excel, ZIP, code and more
+                </div>
+            </label>
+
+            <input
+                type="file"
+                id="fileInput"
+            >
+
+            <div id="selectedFile"></div>
+
+            <button id="uploadBtn" class="upload-btn">
+                Upload File
+            </button>
+
+        </div>
+
         <p id="status"></p>
 
+        <!-- Saved Text -->
         <div class="saved-section">
+
             <div class="section-header">
                 <h2>Saved Text</h2>
                 <span id="messageCount"></span>
@@ -41,6 +73,21 @@
             <div id="savedText">
                 <!-- Saved messages will appear here -->
             </div>
+
+        </div>
+
+        <!-- Saved Files -->
+        <div class="saved-section">
+
+            <div class="section-header">
+                <h2>Saved Files</h2>
+                <span id="fileCount"></span>
+            </div>
+
+            <div id="savedFiles">
+                <!-- Saved files will appear here -->
+            </div>
+
         </div>
 
     </div>
