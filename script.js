@@ -19,6 +19,7 @@ const emailInput = document.getElementById("emailInput");
 const passwordInput = document.getElementById("passwordInput");
 const loginBtn = document.getElementById("loginBtn");
 const loginStatus = document.getElementById("loginStatus");
+const logoutBtn = document.getElementById("logoutBtn");
 
 
 // =========================
@@ -56,7 +57,9 @@ function showAppScreen() {
 }
 
 
-// Login
+// =========================
+// LOGIN
+// =========================
 
 loginForm.addEventListener(
     "submit",
@@ -70,6 +73,7 @@ loginForm.addEventListener(
         const password =
             passwordInput.value;
 
+
         if (email === "" || password === "") {
 
             loginStatus.textContent =
@@ -78,7 +82,9 @@ loginForm.addEventListener(
             return;
         }
 
+
         loginBtn.disabled = true;
+
         loginBtn.textContent =
             "Signing in...";
 
@@ -103,6 +109,7 @@ loginForm.addEventListener(
                 "Invalid email or password.";
 
             loginBtn.disabled = false;
+
             loginBtn.textContent =
                 "Sign In";
 
@@ -115,13 +122,63 @@ loginForm.addEventListener(
         passwordInput.value = "";
 
         loginBtn.disabled = false;
+
         loginBtn.textContent =
             "Sign In";
     }
 );
 
 
-// Listen for authentication changes
+// =========================
+// LOGOUT
+// =========================
+
+logoutBtn.addEventListener(
+    "click",
+    async function () {
+
+        logoutBtn.disabled = true;
+
+        logoutBtn.textContent =
+            "Signing out...";
+
+
+        const { error } =
+            await supabaseClient.auth.signOut();
+
+
+        if (error) {
+
+            console.error(
+                "Logout error:",
+                error
+            );
+
+            status.textContent =
+                "Error signing out.";
+
+            logoutBtn.disabled =
+                false;
+
+            logoutBtn.textContent =
+                "Sign Out";
+
+            return;
+        }
+
+
+        logoutBtn.disabled =
+            false;
+
+        logoutBtn.textContent =
+            "Sign Out";
+    }
+);
+
+
+// =========================
+// AUTH STATE
+// =========================
 
 supabaseClient.auth.onAuthStateChange(
     function (event, session) {
@@ -142,7 +199,9 @@ supabaseClient.auth.onAuthStateChange(
 );
 
 
-// Check existing login when page loads
+// =========================
+// CHECK AUTHENTICATION
+// =========================
 
 async function checkAuthentication() {
 
@@ -264,8 +323,6 @@ function displayMessages(messages) {
                 "message-actions";
 
 
-            // Copy button
-
             const copyButton =
                 document.createElement("button");
 
@@ -316,8 +373,6 @@ function displayMessages(messages) {
                 }
             );
 
-
-            // Delete button
 
             const deleteButton =
                 document.createElement("button");
@@ -408,7 +463,9 @@ function displayMessages(messages) {
 }
 
 
-// Save text
+// =========================
+// SAVE TEXT
+// =========================
 
 saveBtn.addEventListener(
     "click",
@@ -481,7 +538,9 @@ saveBtn.addEventListener(
 );
 
 
-// Copy All
+// =========================
+// COPY ALL
+// =========================
 
 copyBtn.addEventListener(
     "click",
@@ -565,7 +624,9 @@ copyBtn.addEventListener(
 );
 
 
-// Clear
+// =========================
+// CLEAR
+// =========================
 
 clearBtn.addEventListener(
     "click",
@@ -582,8 +643,6 @@ clearBtn.addEventListener(
 // =========================
 // FILE FUNCTIONS
 // =========================
-
-// Show selected file
 
 fileInput.addEventListener(
     "change",
@@ -613,7 +672,9 @@ fileInput.addEventListener(
 );
 
 
-// Upload file
+// =========================
+// UPLOAD FILE
+// =========================
 
 uploadBtn.addEventListener(
     "click",
@@ -648,8 +709,6 @@ uploadBtn.addEventListener(
                     .substring(2, 10)}-${file.name}`;
 
 
-            // Get current logged-in user
-
             const {
                 data: {
                     user
@@ -666,8 +725,6 @@ uploadBtn.addEventListener(
                 return;
             }
 
-
-            // Store file inside user's own folder
 
             const filePath =
                 `${user.id}/${uniqueName}`;
@@ -754,7 +811,6 @@ uploadBtn.addEventListener(
             status.textContent =
                 "File uploaded successfully!";
 
-
             loadFiles();
 
         } catch (error) {
@@ -779,7 +835,9 @@ uploadBtn.addEventListener(
 );
 
 
-// Load files
+// =========================
+// LOAD FILES
+// =========================
 
 async function loadFiles() {
 
@@ -816,7 +874,9 @@ async function loadFiles() {
 }
 
 
-// Display files
+// =========================
+// DISPLAY FILES
+// =========================
 
 function displayFiles(files) {
 
@@ -907,8 +967,6 @@ function displayFiles(files) {
             actions.className =
                 "file-actions";
 
-
-            // Download button
 
             const downloadButton =
                 document.createElement("button");
@@ -1015,8 +1073,6 @@ function displayFiles(files) {
                 }
             );
 
-
-            // Delete button
 
             const deleteButton =
                 document.createElement("button");
