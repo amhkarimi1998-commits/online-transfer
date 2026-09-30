@@ -6,94 +6,125 @@
     <title>Online Transfer</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
-
-    <div class="container">
-
-        <div class="header">
-            <div class="logo">↔</div>
-            <div>
-                <h1>Online Transfer</h1>
-                <p class="subtitle">Transfer text and files between your devices</p>
-            </div>
-        </div>
-
-        <!-- Text Transfer -->
-        <textarea
-            id="textInput"
-            placeholder="Paste your text here..."
-        ></textarea>
-
-        <div class="buttons">
-            <button id="saveBtn">Save</button>
-            <button id="copyBtn">Copy All</button>
-            <button id="clearBtn">Clear</button>
-        </div>
-
-        <!-- File Transfer -->
-        <div class="file-section">
-
-            <div class="file-header">
-                <h2>Transfer Files</h2>
-                <span>Any file type</span>
-            </div>
-
-            <label for="fileInput" class="file-drop-area">
-                <div class="file-icon">📁</div>
-                <div class="file-title">Choose a file</div>
-                <div class="file-subtitle">
-                    Images, videos, PDF, Word, Excel, ZIP, code and more
-                </div>
-            </label>
-
+<!-- Login Screen -->
+<div id="loginScreen" class="login-screen">
+    <div class="login-box">
+        <div class="logo">↔</div>
+        <h1>Online Transfer</h1>
+        <p class="login-subtitle">
+            Sign in to access your files and messages
+        </p>
+        <form id="loginForm">
             <input
-                type="file"
-                id="fileInput"
+                type="email"
+                id="emailInput"
+                placeholder="Email"
+                autocomplete="email"
+                required
             >
-
-            <div id="selectedFile"></div>
-
-            <button id="uploadBtn" class="upload-btn">
-                Upload File
+            <input
+                type="password"
+                id="passwordInput"
+                placeholder="Password"
+                autocomplete="current-password"
+                required
+            >
+            <button type="submit" id="loginBtn">
+                Sign In
             </button>
-
-        </div>
-
-        <p id="status"></p>
-
-        <!-- Saved Text -->
-        <div class="saved-section">
-
-            <div class="section-header">
-                <h2>Saved Text</h2>
-                <span id="messageCount"></span>
-            </div>
-
-            <div id="savedText">
-                <!-- Saved messages will appear here -->
-            </div>
-
-        </div>
-
-        <!-- Saved Files -->
-        <div class="saved-section">
-
-            <div class="section-header">
-                <h2>Saved Files</h2>
-                <span id="fileCount"></span>
-            </div>
-
-            <div id="savedFiles">
-                <!-- Saved files will appear here -->
-            </div>
-
-        </div>
-
+        </form>
+        <p id="loginStatus"></p>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-    <script src="script.js"></script>
-
+</div>
+<!-- Main App -->
+<div id="appScreen" class="container" style="display: none;">
+    <div class="header">
+        <div class="logo">↔</div>
+        <div>
+            <h1>Online Transfer</h1>
+            <p class="subtitle">
+                Transfer text and files between your devices
+            </p>
+        </div>
+    </div>
+    <!-- Text Transfer -->
+    <textarea
+        id="textInput"
+        placeholder="Paste your text here..."
+    ></textarea>
+    <div class="buttons">
+        <button id="saveBtn">
+            Save
+        </button>
+        <button id="copyBtn">
+            Copy All
+        </button>
+        <button id="clearBtn">
+            Clear
+        </button>
+    </div>
+    <!-- File Transfer -->
+    <div class="file-section">
+        <div class="file-header">
+            <h2>Transfer Files</h2>
+            <span>
+                Any file type
+            </span>
+        </div>
+        <label
+            for="fileInput"
+            class="file-drop-area"
+        >
+            <div class="file-icon">
+                📁
+            </div>
+            <div class="file-title">
+                Choose a file
+            </div>
+            <div class="file-subtitle">
+                Images, videos, PDF, Word, Excel, ZIP, code and more
+            </div>
+        </label>
+        <input
+            type="file"
+            id="fileInput"
+        >
+        <div id="selectedFile"></div>
+        <button
+            id="uploadBtn"
+            class="upload-btn"
+        >
+            Upload File
+        </button>
+    </div>
+    <p id="status"></p>
+    <!-- Saved Text -->
+    <div class="saved-section">
+        <div class="section-header">
+            <h2>
+                Saved Text
+            </h2>
+            <span id="messageCount"></span>
+        </div>
+        <div id="savedText">
+            <!-- Saved messages will appear here -->
+        </div>
+    </div>
+    <!-- Saved Files -->
+    <div class="saved-section">
+        <div class="section-header">
+            <h2>
+                Saved Files
+            </h2>
+            <span id="fileCount"></span>
+        </div>
+        <div id="savedFiles">
+            <!-- Saved files will appear here -->
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
