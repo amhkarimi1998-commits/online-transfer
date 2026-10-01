@@ -543,3 +543,12 @@ button:disabled {
         width: 100%;
     }
 }
+.designer-credit {
+    text-align: center;
+    margin-top: 30px;
+    padding: 15px 0;
+    color: rgba(255,255,255,0.55);
+    font-size: 12px;
+    letter-spacing: 1px;
+    user-select: none;
+}
